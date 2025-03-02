@@ -1,0 +1,46 @@
+import logging
+import requests
+import os
+from dotenv import load_dotenv
+
+# Carregar variáveis do arquivo .env
+load_dotenv()
+
+# Configuração do logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+# Ler Access Token do TikTok do .env
+ACCESS_TOKEN = os.getenv("TIKTOK_ACCESS_TOKEN")
+
+if not ACCESS_TOKEN:
+    logging.error("❌ Access Token não encontrado no .env! Verifique se o arquivo está configurado corretamente.")
+    exit()
+
+# URL da API para upload de vídeos
+UPLOAD_URL = "https://open-api.tiktokglobal.io/v2/video/upload/"
+
+# Pasta onde os vídeos foram baixados
+pasta_videos = "videos_drive"
+
+# Listar arquivos na pasta
+arquivos_mp4 = [f for f in os.listdir(pasta_videos) if f.endswith(".mp4")]
+
+if not arquivos_mp4:
+    logging.warning("⚠️ Nenhum vídeo encontrado para upload no TikTok.")
+else:
+    for video in arquivos_mp4:
+        caminho_video = os.path.join(pasta_videos, video)
+        logging.info(f"⬆️ Enviando vídeo: {video} para o TikTok...")
+
+        # Enviar o vídeo para o TikTok
+        with open(caminho_video, "rb") as file:
+            response = requests.post(
+                UPLOAD_URL,
+                headers={"Authorization": f"Bearer {ACCESS_TOKEN}"},
+                files={"video": file}
+            )
+
+        if response.status_code == 200:
+            logging.info(f"✅ Vídeo {video} enviado com sucesso!")
+        else:
+            logging.warning(f"⚠️ Erro ao enviar {video}. Código HTTP: {response.status_code} - {response.text}")
